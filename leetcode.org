@@ -606,7 +606,6 @@ hasRoot(root) = root.val + noRoot(root.left) + noRoot(root.right);
 noRoot(root) = max(noRoot(root.left), hasRoot(root.left)) +
                max(noRoot(root.right), hasRoot(root.right))
 #+END_SRC
-
 ** House Robber III (#337) Solution
 #+BEGIN_SRC java
 // Do a level order tranversal so that we could manipulate nodes bottom-up.
@@ -649,6 +648,7 @@ public int rob(TreeNode root) {
     return Math.max(getOrZero(root, hasRoot), getOrZero(root, noRoot));
 }
 #+END_SRC
+<<<<<<< HEAD
 ** Unique Paths (#62)
 \pause
 - *Hint 1:* When robot is at (x, y), where can it come from?
