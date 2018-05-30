@@ -472,6 +472,31 @@ public int findMaxConsecutiveOnes(int[] nums) {
     return max;
 }
 #+END_SRC
+** Climbing Stairs (#70)
+\pause
+- *Hint 1:* For current step, what status will it depend on?
+\pause
+- *Hint 2:* It only depends on 2 previous stairs: i - 1 and i - 2.
+\pause
+- *Hint 3:* The formula is:
+#+BEGIN_SRC text
+step(i) = step(i - 1) + step(i - 2)
+#+END_SRC
+So it only depends on 2 variables. And yes, it's same as getting n-th element
+from Fibonacci sequence.
+** Climbing Stairs (#70) Solution
+#+BEGIN_SRC java
+public int climbStairs(int n) {
+    int a0 = 0;
+    int a1 = 1;
+    for (int i = 0; i < n; i++) {
+        int a2 = a0 + a1;
+        a0 = a1;
+        a1 = a2;
+    }
+    return a1;
+}
+#+END_SRC
 ** Knapsack Styled DP
    Knapsack problems are pseudo-polynomial time. They require DP over the value
    domain of some of the parameters. The characteristic of the problems of this
