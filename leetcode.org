@@ -248,6 +248,9 @@ class Solution {
 // TODO
 #+END_SRC
 
+** Single Sequence Styled DP
+   There is only one sequence. Current state is often determined by 1 or more
+   previous states.
 ** Best Time to Buy and Sell Stock I (#121)
 \pause
 - *Hint 1:* At Day $i$ if you decide to sell, what is the maximum price you
@@ -589,6 +592,9 @@ public boolean canPartition(int[] nums) {
 }
 #+END_SRC
 
+** Tree Style DP
+   This should not be very common. Each tree node represents one
+   optimal value when we apply the operation within that subtree.
 ** House Robber III (#337)
 \pause
 - *Hint 1:* This is a little bit tricky. For each root node, you have 2 options
@@ -648,7 +654,9 @@ public int rob(TreeNode root) {
     return Math.max(getOrZero(root, hasRoot), getOrZero(root, noRoot));
 }
 #+END_SRC
-<<<<<<< HEAD
+** Coordinate Style DP
+   This normally consists of a grid-like structure, with coordinates
+   representing the states.
 ** Unique Paths (#62)
 \pause
 - *Hint 1:* When robot is at (x, y), where can it come from?
@@ -713,5 +721,89 @@ public int uniquePathsWithObstacles(int[][] obstacleGrid) {
         }
     }
     return dp[m - 1][n - 1];
+}
+#+END_SRC
+** Triangle (#120)
+\pause
+- *Hint 1:* Similar to unique paths, you can still use coordinates as
+  state.
+\pause
+- *Hint 2:* The formula is:
+#+BEGIN_SRC text
+  a(i, j) = min(a(i - 1, j - 1), a(i - 1, j)) + triangle(i, j)
+#+END_SRC
+\pause
+- *Hint 3:* For layer N, you may only care about layer N - 1, which saves you
+  from using O(n^2) space
+** Triangle (#120) Solution
+#+BEGIN_SRC java
+public int minimumTotal(List<List<Integer>> triangle) {
+    int[] dp = new int[triangle.size()];
+    for (int i = 0; i < triangle.size(); i++) {
+        int[] tmp = new int[triangle.size()];
+        List<Integer> row = triangle.get(i);
+        for (int j = 0; j < row.size(); j++) {
+            if (i == 0 || j == 0) tmp[j] = dp[j] + row.get(j);
+            else if (j == row.size() - 1) tmp[j] = dp[j - 1] + row.get(j);
+            else tmp[j] = Math.min(dp[j], dp[j - 1]) + row.get(j);
+        }
+        dp = tmp;
+    }
+    int min = Integer.MAX_VALUE;
+    for (int a : dp) min = Math.min(min, a);
+    return min;
+}
+#+END_SRC
+** Dungeon Game (#174)
+\pause
+- *Hint 1:* Traditionally if we walk forward, we don't know what the start HP is. It's
+  not easy to go right / down. It's probably better to go backwards, since we know at
+  the point we reach the princes, we should have at least 1 HP to spare.
+\pause
+- *Hint 2:* The formula is:
+#+BEGIN_SRC text
+// minHp represents the minimum Hp we need *before* we step on cell[i][j].
+minHp(i, j) = min(minHp(i + 1, j) ? dungeon(i, j), minHp(i, j + 1) ? dungeon(i, j))
+#+END_SRC
+Can you guess what *?* should represent?
+\pause
+- *Hint 3:* *?* could be represented as the following function:
+#+BEGIN_SRC java
+// lastCell is either [i+1][j] or [i][j+1]. currentCell is dungeon[i][j].
+// This says that if we want to move from currentCell to lastCell, the Hp we need
+// before we step onto [i][j] so that we can finally reach the bottom / right cell.
+private int getValue(int lastCell, int currentCell) {
+    // If [i][j] is negative, we'll need to add that to our budget.
+    if (currentCell < 0) return lastCell - currentCell;
+    // If lastCell's required amount is less than the amount we can gain from
+    // current cell, we only need to be alive before we step on it.
+    if (lastCell <= currentCell) return 1;
+    // Otherwise, we can charge up at current cell to the point that lastCell
+    // requires.
+    return lastCell - currentCell;
+}
+#+END_SRC
+** Dungeon Game (#174) Solution
+#+BEGIN_SRC java
+private int getValue(int lastCell, int currentCell) {
+    if (currentCell < 0) return lastCell - currentCell;
+    if (lastCell <= currentCell) return 1;
+    return lastCell - currentCell;
+}
+
+public int calculateMinimumHP(int[][] dungeon) {
+    int[][] minHp = new int[dungeon.length][dungeon[0].length];
+    int h = dungeon.length - 1;
+    int w = dungeon[0].length - 1;
+    for (int i = h; i >= 0; i--) {
+        for (int j = w; j >= 0; j--) {
+            if (i == h && j == w) minHp[i][j] = getValue(1, dungeon[i][j]);
+            else if (i == h) minHp[i][j] = getValue(minHp[i][j + 1], dungeon[i][j]);
+            else if (j == w) minHp[i][j] = getValue(minHp[i + 1][j], dungeon[i][j]);
+            else minHp[i][j] = Math.min(getValue(minHp[i + 1][j], dungeon[i][j]),
+                        getValue(minHp[i][j + 1], dungeon[i][j]));
+        }
+    }
+    return minHp[0][0];
 }
 #+END_SRC
