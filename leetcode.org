@@ -497,6 +497,84 @@ public int climbStairs(int n) {
     return a1;
 }
 #+END_SRC
+** Domino and Tromino Tiling (#790)
+\pause
+- *Hint 1:* Consider the following graph. How many types of states are there?
+
+#+BEGIN_CENTER
+#+ATTR_LaTeX: :height 0.4\textwidth :center
+  [[./images/790_states.png]]
+#+END_CENTER
+
+** Domino and Tromino Tiling (#790)
+- *Hint 2:* We can classify them into two categories: OneOut and Smooth. How can
+  you construct the subproblem for both types?
+#+BEGIN_CENTER
+#+ATTR_LaTeX: :height 0.4\textwidth :center
+  [[./images/790_configure.png]]
+#+END_CENTER
+
+** Domino and Tromino Tiling (#790)
+- *Hint 3:* You can have the following formula:
+#+BEGIN_CENTER
+#+ATTR_LaTeX: :height 0.4\textwidth :center
+  [[./images/790_formula.png]]
+#+END_CENTER
+
+** Domino and Tromino Tiling (#790) Solution
+#+BEGIN_SRC java
+public int numTilings(int N) {
+    final int MOD = 1000000007;
+
+    if (N == 0) return 0;
+    if (N == 1) return 1;
+    if (N == 2) return 2;
+
+    // Use long to avoid overflow during addition.
+    long[] smooth = new long[N];
+    long[] oneOut = new long[N];
+
+    smooth[0] = 1;
+    smooth[1] = 2;
+
+    oneOut[1] = 1;
+
+    for (int i = 2; i < N; i++) {
+        smooth[i] = (smooth[i - 1] + smooth[i - 2] + 2 * oneOut[i - 1]) % MOD;
+        oneOut[i] = (smooth[i - 2] + oneOut[i - 1]) % MOD;
+    }
+
+    return (int) smooth[N - 1];
+}
+#+END_SRC
+*Bonus Point:* Can you solve it with O(1) space?
+
+** Domino and Tromino (#790) Solution
+   Notice that smooth_i / oneOut_i only depends on smooth_{i-1}, smooth_{i-2} and
+   oneOut_{i-1}.
+
+#+BEGIN_SRC java
+public int numTilings(int N) {
+    if (N == 0) return 0;
+    if (N == 1) return 1;
+
+    final int MOD = 1000000007;
+
+    long smooth0 = 1;
+    long smooth1 = 2;
+    long oneOut0 = 1;
+
+    for (int i = 2; i < N; i++) {
+        long smooth2 = (smooth1 + smooth0 + 2 * oneOut0) % MOD;
+        oneOut0 = (smooth0 + oneOut0) % MOD;
+        smooth0 = smooth1;
+        smooth1 = smooth2;
+    }
+
+    return (int) smooth1;
+}
+#+END_SRC
+
 ** Knapsack Styled DP
    Knapsack problems are pseudo-polynomial time. They require DP over the value
    domain of some of the parameters. The characteristic of the problems of this
