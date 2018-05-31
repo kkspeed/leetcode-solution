@@ -575,6 +575,39 @@ public int numTilings(int N) {
 }
 #+END_SRC
 
+** Frog Jump (#403)
+\pause
+- *Hint 1:* Whether the frog can reach stone_i depends solely on stones (0..i-1).
+\pause
+- *Hint 2:* If the frog jumps from stone_j to stone_i, it must have jumped
+  from another stone_k to stone_j, where |i - j - (j - k)| <= 1.
+\pause
+- *Hint 3:* One way to express this is:
+#+BEGIN_SRC text
+jump(i) = {j | j = 0..i - 1 and (i - j - 1 in jump[j] or
+               i - j in jump[j] or i - j + 1 in jump[j])}
+jump(0) = {0}
+The frog can reach the end iff jump(last) is not empty.
+#+END_SRC
+** Frog Jump (#403) Solution
+#+BEGIN_SRC java
+public boolean canCross(int[] stones) {
+    ArrayList<HashSet<Integer>> dp = new ArrayList<>();
+    for (int ignored : stones) dp.add(new HashSet<>());
+    dp.get(0).add(0);
+    for (int i = 1; i < stones.length; i++) {
+        for (int j = 0; j < i; j++) {
+            int step = stones[i] - stones[j];
+            if (dp.get(j).contains(step - 1) ||
+                    dp.get(j).contains(step) ||
+                    dp.get(j).contains(step + 1)) {
+                dp.get(i).add(step);
+            }
+        }
+    }
+    return !dp.get(stones.length - 1).isEmpty();
+}
+#+END_SRC
 ** Knapsack Styled DP
    Knapsack problems are pseudo-polynomial time. They require DP over the value
    domain of some of the parameters. The characteristic of the problems of this
