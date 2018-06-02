@@ -943,3 +943,51 @@ public int calculateMinimumHP(int[][] dungeon) {
     return minHp[0][0];
 }
 #+END_SRC
+** Higher Ordered DPs
+   I'm calling this type "higher ordered DP" because
+   it generally requires O(n^3) to solve. One example of
+   it would be matrix multiplication:
+
+   Given matrix chain ABCDEFG, calculate the product of
+   it with least number of multiplications.
+   Different number of multiplications could be achieved
+   by adding parentheses. For example, (A(B(CD)E)(FG)) and
+   ((ABCD)(EFG)) may require different number of multiplications.
+
+   Read https://home.cse.ust.hk/~dekai/271/notes/L12/L12.pdf for
+   more information on matrix multiplication.
+
+** Burst Balloons (#312)
+\pause
+- *Hint 1:* If I burst balloons between (i, j) and iand j becomes
+  neighbor, assume the sequence is optimal, do any subsequent operations
+  affect it?
+\pause
+- *Hint 2:* The formula:
+#+BEGIN_SRC text
+max(i, j) = max{max(i, k) + max(k, j) + balloons[i] * balloons[k] * balloons[j]}.
+#+END_SRC
+- *Hint 3:* It helps to prepend 1 and append 1 to both sides of the array.
+
+** Burst Balloons (#312) Solution
+#+BEGIN_SRC java
+public int maxCoins(int[] nums) {
+    int[] balloons = new int[nums.length + 2];
+    balloons[0] = balloons[balloons.length - 1] = 1;
+    System.arraycopy(nums, 0, balloons, 1, nums.length);
+    int[][] dp = new int[balloons.length][balloons.length];
+    // As indicated in Page 19 of https://home.cse.ust.hk/~dekai/271/notes/L12/L12.pdf,
+    // we'll need to calculate sequences ordered by length. So k represents the length
+    // of the sequence.
+    for (int k = 2; k <= balloons.length - 1; k++) {
+        for (int i = 0; i < balloons.length - k; i++) {
+            int end = i + k;
+            for (int j = i + 1; j <= end - 1; j++) {
+                int score = dp[i][j] + dp[j][end] + balloons[i] * balloons[j] * balloons[end];
+                if (score > dp[i][end]) dp[i][end] = score;
+            }
+        }
+    }
+    return dp[0][balloons.length - 1];
+}
+#+END_SRC
