@@ -1001,6 +1001,47 @@ public int maxCoins(int[] nums) {
    various operations on it. Since each element enters the stack and is
    popped off the stack once, it's still linear.
 
+** Min Stack (#155)
+\pause
+- *Hint 1:* You'll need to keep all the minimum numbers that you encountered
+  so far. How do you do that?
+\pause
+- *Hint 2:* You can use 2 stacks. One regular and one for min numbers. If
+  a newly encountered number is smaller than or equal to the one on top of the min
+  stack, you push it onto the min stack as well.
+** Min Stack (#155) Solution
+#+BEGIN_SRC java
+class MinStack {
+    private Stack<Integer> st;
+    private Stack<Integer> min;
+
+    /** initialize your data structure here. */
+    public MinStack() {
+        st = new Stack<>();
+        min = new Stack<>();
+    }
+
+    public void push(int x) {
+        st.push(x);
+        if (min.empty() || min.peek() >= x)
+            min.push(x);
+    }
+
+    public void pop() {
+        int e = st.pop();
+        if (e == min.peek())
+            min.pop();
+    }
+
+    public int top() {
+        return st.peek();
+    }
+
+    public int getMin() {
+        return min.peek();
+    }
+}
+#+END_SRC
 ** Remove K Digits (#402)
 \pause
 - *Hint 1:* What you need to do to make sure the end number is smaller?
@@ -1058,5 +1099,64 @@ public int[] nextGreaterElements(int[] nums) {
         }
     }
     return result;
+}
+#+END_SRC
+** Largest Rectangle in Histogram (#84)
+\pause
+- *Hint 1:* For each element, how is the area of the rectangle that includes
+  this element is calculated?
+#+BEGIN_CENTER
+#+ATTR_LaTeX: :height 0.3\textwidth :center
+  [[./images/84_maximal_1.png]]
+#+END_CENTER
+\pause
+- *Hint 2:* The area of the rectangle is:
+#+BEGIN_SRC text
+((Num of continous rect on left with greater height)
+ + (Num of continous rect on right with greater height))
+ * rect[i].height
+#+END_SRC
+How can we calculate this?
+
+\pause
+- *Hint 3:* You can use a monotonic stack to compute the
+  Num of rects! Do it from left to right then from right to
+  left.
+** Largest Rectangle in Histogram (#84) Solution
+#+BEGIN_SRC java
+private void addWidth(int[] heights, int[] widths) {
+    Stack<Integer> stack = new Stack<>();
+    for (int i = 0; i < heights.length; i++) {
+        while (!stack.empty() && heights[stack.peek()] > heights[i]) {
+            int index = stack.pop();
+            widths[index] += i - index;
+        }
+        stack.push(i);
+    }
+    while (!stack.empty()) {
+        int index = stack.pop();
+        widths[index] += heights.length - index;
+    }
+}
+
+private int[] reverse(int[] array) {
+    for (int i = 0; i < array.length / 2; i++) {
+        int tmp = array[i];
+        array[i] = array[array.length - i - 1];
+        array[array.length - i - 1] = tmp;
+    }
+    return array;
+}
+
+public int largestRectangleArea(int[] heights) {
+    Stack<Integer> stack = new Stack<>();
+    int[] widths = new int[heights.length];
+    int maxArea = 0;
+    addWidth(heights, widths);
+    addWidth(reverse(heights), reverse(widths));
+    for (int i = 0; i < heights.length; i++) {
+        maxArea = Math.max(heights[i] * (widths[i] - 1), maxArea);
+    }
+    return maxArea;
 }
 #+END_SRC
