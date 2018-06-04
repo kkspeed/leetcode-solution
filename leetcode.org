@@ -991,3 +991,72 @@ public int maxCoins(int[] nums) {
     return dp[0][balloons.length - 1];
 }
 #+END_SRC
+* Monotonic Stack
+** Monotonic Stack
+   It's generally used for linear data structure. You maintain a
+   (stack-like) structure that is increasing or decreasing. When you
+   encounter an element that's smaller / larger than this one, you
+   keep popping the stack until the element is larger than / smaller than
+   the current top of the stack. In the process of popping, you can do
+   various operations on it. Since each element enters the stack and is
+   popped off the stack once, it's still linear.
+
+** Remove K Digits (#402)
+\pause
+- *Hint 1:* What you need to do to make sure the end number is smaller?
+\pause
+- *Hint 2:* You can use a stack, when you encounter an element that's smaller than
+  the top of the stack, you keep on popping. Then push the element onto the stack.
+  You'll need to keep track of $k$ as well, since you can only pop $k$ times maximum.
+
+** Remove K Digits (#402) Solution
+#+BEGIN_SRC java
+public String removeKdigits(String num, int k) {
+    StringBuilder stack = new StringBuilder();
+    for (char n : num.toCharArray()) {
+        while (stack.length() > 0 && stack.charAt(stack.length() - 1) > n && k > 0) {
+            k--;
+            stack.deleteCharAt(stack.length() - 1);
+        }
+        stack.append(n);
+    }
+    while (k != 0 && stack.length() > 0) {
+        stack.deleteCharAt(stack.length() - 1);
+        k--;
+    }
+    while (stack.length() > 0 && stack.charAt(0) == '0') {
+        stack.deleteCharAt(0);
+    }
+    return stack.length() == 0 ? "0" : stack.toString();
+}
+#+END_SRC
+** Next Greater Element II (#503)
+\pause
+- *Hint 1:* You'll need to keep track the elements
+  you've encountered so far until you meed a greater element.
+  Then assign all the elements that are smaller than that one
+  the index. What can you do?
+\pause
+- *Hint 2:* You can use a stack that's monotonically decreasing.
+  When you find an element that's greater than the stack top, you
+  keep popping element and assign the index. Just remember the array
+  counts circular so you'll need to take care of it.
+
+** Next Greater Element II (#503) Solution
+#+BEGIN_SRC java
+public int[] nextGreaterElements(int[] nums) {
+    int[] result = new int[nums.length];
+    Arrays.fill(result, -1);
+    Stack<Integer> stack = new Stack<>();
+    for (int i = 0; i < 2 * nums.length - 1; i++) {
+        int index = i % nums.length;
+        while (!stack.empty() && nums[index] > nums[stack.peek()]) {
+            result[stack.pop()] = nums[index];
+        }
+        if (result[index] == -1) {
+            stack.push(index);
+        }
+    }
+    return result;
+}
+#+END_SRC
