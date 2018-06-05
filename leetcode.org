@@ -1184,3 +1184,45 @@ public int largestRectangleArea(int[] heights) {
     return maxArea;
 }
 #+END_SRC
+** Sliding Window Maximum (#239)
+\pause
+- *Hint 1:* To keep the maximum value for an interval, a stack-like
+  structure could be used. But is stack enough?
+\pause
+- *Hint 2:* You'll need to remove from bottom of stack -- so might be
+  using LinkedList.
+\pause
+- *Hint 3: First, we pop the last element
+  from the window. If that is at the bottom of stack, we remove it as well.
+  Then for a new element, we keep popping the stack until we find an element
+  that's greater than this element. This still takes linear time and the
+  maximum value is preserved.
+** Sliding Window Maximum (#239) Solution
+#+BEGIN_SRC java
+public int[] maxSlidingWindow(int[] nums, int k) {
+    if (nums.length == 0) return new int[]{};
+
+    int[] result = new int[nums.length - k + 1];
+    LinkedList<Integer> list = new LinkedList<>();
+    for (int i = 0; i < k; i++) {
+        while (!list.isEmpty() && list.getLast() < nums[i]) {
+            list.removeLast();
+        }
+        list.addLast(nums[i]);
+    }
+
+    for (int i = k; i < nums.length; i++) {
+        result[i - k] = list.getFirst();
+        int out = nums[i - k];
+        if (out == list.getFirst()) {
+            list.removeFirst();
+        }
+        while (!list.isEmpty() && list.getLast() < nums[i]) {
+            list.removeLast();
+        }
+        list.addLast(nums[i]);
+    }
+    result[nums.length - k] = list.getFirst();
+    return result;
+}
+#+END_SRC
