@@ -1236,7 +1236,57 @@ Two pointers has two sub-types:
 
 In general, two pointers are used if there is some condition that you
 can decide the direction for the pointers to move.
-
+** Linked List Cycle (#141)
+\pause
+- *Hint:* You can use a fast and a slow pointer. The fast pointer moves 2 nodes
+  each time and the slow pointer moves 1 node each time. If the two pointers meet,
+  it's the cycle.
+** Linked List Cycle (#141) Solution
+#+BEGIN_SRC java
+public boolean hasCycle(ListNode head) {
+    ListNode slow = head;
+    ListNode fast = head;
+    while (fast != null && fast.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
+        if (slow == fast) return true;
+    }
+    return false;
+}
+#+END_SRC
+** Linked List Cycle II (#142)
+\pause
+- *Hint 1:* When two pointers meet, what's the distance between the two pointers
+  traveled?
+\pause
+- *Hint 2:* The distance is the length of the circle. Then you can ask the fast
+  pointer to move such distance. Then move each pointer by 1 unit. What's the
+  meet point?
+** Linked List Cycle II (#142) Solution
+#+BEGIN_SRC java
+public ListNode detectCycle(ListNode head) {
+    ListNode slow = head;
+    ListNode fast = head;
+    int length = 0;
+    while (fast != null && fast.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
+        length++;
+        if (slow == fast) {
+            slow = fast = head;
+            for (int i = 0; i < length; i++) {
+                fast = fast.next;
+            }
+            while (slow != fast) {
+                slow = slow.next;
+                fast = fast.next;
+            }
+            return slow;
+        }
+    }
+    return null;
+}
+#+END_SRC
 ** Two Sum II (#167)
 \pause
 - *Hint:* Start from two sides i, j. If a_i + a_j < target, we should increase i.
