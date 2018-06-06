@@ -1226,3 +1226,66 @@ public int[] maxSlidingWindow(int[] nums, int k) {
     return result;
 }
 #+END_SRC
+* Two Pointers
+** Two Pointers
+Two pointers has two sub-types:
+- Two-sided pointers: the 2 pointers go from both sides in-wards.
+- Fast-slow pointers: 2 pointers go from the same starting point but
+  one moves faster and the other moves slower.
+- Outbound pointers: 2 pointers start at the same point but move out-bound.
+
+In general, two pointers are used if there is some condition that you
+can decide the direction for the pointers to move.
+
+** Two Sum II (#167)
+\pause
+- *Hint:* Start from two sides i, j. If a_i + a_j < target, we should increase i.
+  Otherwise, if a_i + a_j > target, we should decrease j.
+** Two Sum II (#167) Solution
+#+BEGIN_SRC java
+public int[] twoSum(int[] numbers, int target) {
+    int start = 0;
+    int end = numbers.length - 1;
+    while (start < end) {
+        int sum = numbers[start] + numbers[end];
+        if (sum == target) {
+            return new int[]{start + 1, end + 1};
+        }
+        if (sum < target) start++;
+        else end--;
+    }
+    return new int[]{};
+}
+#+END_SRC
+
+** Container with Most Water (#11)
+\pause
+- *Hint 1:* For a container with 2 sides l_1 and l_2,
+  the area is min(height[l_1], height[l_2]) * (l2 - l1).
+\pause
+- *Hint 2:* Say l_1 is smaller than l_2, what is the next position for l_1
+  so that it's area could be greater than current one?
+\pause
+- *Hint 3:* The next candidate for l_1 can only be those position a_i such that
+  height[a_i] > l_1. Otherwise, the height is smaller / unchanged and the length
+  is reduced. In such case, the area is always smaller.
+** Container with Most Water (#11) Solution
+#+BEGIN_SRC java
+public int maxArea(int[] height) {
+    int start = 0;
+    int end = height.length - 1;
+    int maxSize = 0;
+    while (start < end) {
+        int h1 = height[start];
+        int h2 = height[end];
+        int area = Math.min(h1, h2) * (end - start);
+        maxSize = Math.max(area, maxSize);
+        if (height[end] < height[start]) {
+            while (end > start && height[end] <= h2) end--;
+        } else {
+            while (start < end && height[start] <= h1) start++;
+        }
+    }
+    return maxSize;
+}
+#+END_SRC
