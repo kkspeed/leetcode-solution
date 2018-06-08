@@ -1339,3 +1339,498 @@ public int maxArea(int[] height) {
     return maxSize;
 }
 #+END_SRC
+* Parsing
+** Parsing
+There are a certain category of problems that require you
+to come up with a mini parser. The parser is usually a
+recursive descendant parser -- most likely LL(1) parser. So
+you'll need to first make sure you understand the grammar.
+
+If the grammar is left-recursive, that is, the grammar's transitive
+closure has the form T = T |... You'll need to refactor the grammar
+so that it's not left recursive anymore.
+
+Please read context-free grammar at: https://en.wikipedia.org/wiki/LL_parser
+
+** Steps to Solution
+For this type of problem, the recommended steps are:
+
+- Understand / summarize the grammar (write the notation down)
+- Identify if it's left-recursive, if yes, you'll need to refactor it
+- Write the parser
+
+*Note:* Actually most problems in this section could be solved
+in a simpler way than the above steps. But doing so will make the solution
+more systematic and it's good exercise. That being said, the solution is
+lengthy and you may need to actually come up with a different solution and/or
+shorter solution in actual interview (not so hard once you already know the
+grammar).
+
+** Decode String (#394)
+\pause
+- *Hint 1:* Can you write down the grammar?
+\pause
+- *Hint 2:* The grammar for the string is:
+
+#+BEGIN_SRC text
+S = E | <number>[S]S* | <char>S*
+number = (0-9)+
+char = [a-zA-Z]
+
+// E: represents empty string
+// S*: represents zero or more S
+#+END_SRC
+
+Is it left recursive?
+\pause
+- *Hint 3:* No! It's not left recursive and you can safely write down the
+  parser recursively.
+
+** Decode String (#394) Solution
+   First, we'll define the representation of the parsed result. First the base class:
+#+BEGIN_SRC java
+private abstract class StringNode {
+    abstract public void buildString(StringBuilder builder);
+}
+#+END_SRC
+   It has one method that basically generates the final string.
+** Decode String (#394) Solution
+   Then we have a couple of inherited classes that represents different types of
+   grammar elements:
+#+BEGIN_SRC java
+// Represents StringNode with <number>[...]
+private class RepeatNode extends StringNode {
+    private final int repeat;
+    private final StringNode internal;
+    public RepeatNode(int n, StringNode node) {
+        repeat = n;
+        internal = node;
+    }
+    @Override
+    public void buildString(StringBuilder builder) {
+        for (int i = 0; i < repeat; i++) {
+            internal.buildString(builder);
+        }
+    }
+}
+// Represents node with single char.
+private class CharNode extends StringNode {
+    private final char character;
+    public CharNode(char c) {
+        character = c;
+    }
+    @Override
+    public void buildString(StringBuilder builder) {
+        builder.append(character);
+    }
+}
+#+END_SRC
+** Decode String (#394) Solution
+   Since the grammar writes "S*", we'll need to represent zero or
+   more such element. We'll thus need yet another one:
+#+BEGIN_SRC java
+// Represents S*
+private class SequentialNode extends StringNode {
+    private final ArrayList<StringNode> nodes = new ArrayList<>();
+    void addNode(StringNode node) {
+        nodes.add(node);
+    }
+    @Override
+    public void buildString(StringBuilder builder) {
+        for (StringNode n : nodes) {
+            n.buildString(builder);
+        }
+    }
+}
+#+END_SRC
+
+** Decode String (#394) Solution
+   Then we'll define the \tt{ParsingState} structure that represents the
+   input stream It's pretty standard across different questions.
+#+BEGIN_SRC java
+private class ParsingState {
+    final String str;
+    int offset = 0;
+    ParsingState(String s) {
+        str = s;
+    }
+    boolean endOfStream() {
+        return offset >= str.length();
+    }
+
+    String take(int n) {
+        String result = str.substring(offset, offset + n);
+        offset += n;
+        return result;
+    }
+
+    char peek() {
+        return str.charAt(offset);
+    }
+
+    String takeWhile(Function<Character, Boolean> pred) {
+        int end = offset;
+        while (end < str.length() && pred.apply(str.charAt(end))) {
+            end++;
+        }
+        String result = str.substring(offset, end);
+        offset = end;
+        return result;
+    }
+}
+#+END_SRC
+
+** Decode String (#394) Solution
+   Now we define the actual parsing functions:
+#+BEGIN_SRC java
+private Integer parseInt(ParsingState s) {
+    String ss = s.takeWhile(c -> c >= '0' && c <= '9');
+    return Integer.parseInt(ss);
+}
+
+private StringNode parseDecodeString(ParsingState s) {
+    SequentialNode result = new SequentialNode();
+    if (s.endOfStream()) {
+        return result;
+    }
+    char c = s.peek();
+    if (c >= '0' && c <= '9') {
+        int num = parseInt(s);
+        s.take(1);  // skip '['
+        StringNode inner = parseDecodeString(s);
+        s.take(1);  // skip ']'
+        result.addNode(new RepeatNode(num, inner));
+    } else if (c == ']') {
+        return result;
+    } else {
+        char ch = s.take(1).charAt(0);
+        result.addNode(new CharNode(ch));
+    }
+    result.addNode(parseDecodeString(s));
+    return result;
+}
+
+public String decodeString(String s) {
+    StringBuilder builder = new StringBuilder();
+    parseDecodeString(new ParsingState(s)).buildString(builder);
+    return builder.toString();
+}
+#+END_SRC
+** Mini Parser (#385)
+\pause
+- *Hint 1:* Can you write down the grammar? Is the
+  grammar left-recursive?
+\pause
+- *Hint 2:* The grammar is:
+#+BEGIN_SRC text
+S=[S(,S)*] | <Integer>
+Integer=(-|0|1|2|3..|9)+
+#+END_SRC
+
+It's not left recursive since you don't have form:
+#+BEGIN_SRC text
+S=S|...
+#+END_SRC
+
+** Mini Parser (#385) Solution
+We can re-use our parsing state:
+#+BEGIN_SRC java
+private class ParsingState {
+    final String str;
+    int offset = 0;
+    ParsingState(String s) {
+        str = s;
+    }
+    boolean endOfStream() {
+        return offset >= str.length();
+    }
+
+    String take(int n) {
+        String result = str.substring(offset, offset + n);
+        offset += n;
+        return result;
+    }
+
+    char peek() {
+        return str.charAt(offset);
+    }
+
+    String takeWhile(Function<Character, Boolean> pred) {
+        int end = offset;
+        while (end < str.length() && pred.apply(str.charAt(end))) {
+            end++;
+        }
+        String result = str.substring(offset, end);
+        offset = end;
+        return result;
+    }
+
+}
+#+END_SRC
+
+** Mini Parser (#385) Solution
+The parsing part is actually quite trivial:
+#+BEGIN_SRC java
+private boolean isDigit(char c) {
+    // For the purpose of this problem, we can treat - as part of the number.
+    return c == '-' || (c >= '0' && c <= '9');
+}
+
+private Integer parseInt(ParsingState s) {
+    String ss = s.takeWhile(this::isDigit);
+    return Integer.parseInt(ss);
+}
+
+private NestedInteger doParse(ParsingState state) {
+    NestedInteger result = new NestedInteger();
+    if (state.endOfStream()) return result;
+
+    char ch = state.peek();
+    if (isDigit(ch)) {
+        int value = parseInt(state);
+        result.setInteger(value);
+        return result;
+    }
+    if (ch == '[') {
+        state.take(1);  // ignore [
+        while (state.peek() != ']') {
+            NestedInteger tmp = doParse(state);
+            result.add(tmp);
+            if (state.peek() == ',') state.take(1);
+        }
+        state.take(1);  // ignore ]
+    }
+    return result;
+}
+
+public NestedInteger deserialize(String s) {
+    return doParse(new ParsingState(s));
+}
+#+END_SRC
+
+** Number of Atoms (#726)
+\pause
+- *Hint 1:* Can you write down the grammar? Is it left-recursive?
+\pause
+- *Hint 2:* The grammar is:
+#+BEGIN_SRC text
+Compound = Form+
+Form = Atom<Num>? | (Compound)<Num?>
+Atom = <Uppercase><lowercase>?
+Num = (0-9)+
+#+END_SRC
+It's not left-recursive.
+** Number of Atoms (#726) Solution
+   We can still reuse our ParsingState class:
+#+BEGIN_SRC java
+private class ParsingState {
+    final String str;
+    int offset = 0;
+    ParsingState(String s) {
+        str = s;
+    }
+    boolean endOfStream() {
+        return offset >= str.length();
+    }
+
+    String take(int n) {
+        String result = str.substring(offset, offset + n);
+        offset += n;
+        return result;
+    }
+
+    char peek() {
+        return str.charAt(offset);
+    }
+
+    String takeWhile(Function<Character, Boolean> predicate) {
+        int end = offset;
+        while (end < str.length() && predicate.apply(str.charAt(end))) {
+            end++;
+        }
+        String result = str.substring(offset, end);
+        offset = end;
+        return result;
+    }
+}
+#+END_SRC
+
+** Number of Atoms (#726) Solution
+We'll need a bunch of helpers as well:
+#+BEGIN_SRC java
+private boolean isDigit(char c) {
+    // For the purpose of this problem, we can treat - as part of the number.
+    return c == '-' || (c >= '0' && c <= '9');
+}
+
+private Integer parseInt(ParsingState s) {
+    String ss = s.takeWhile(this::isDigit);
+    return Integer.parseInt(ss);
+}
+
+private boolean isUpperCase(char c) {
+    return c >= 'A' && c <= 'Z';
+}
+
+private boolean isLowerCase(char c) {
+    return c >= 'a' && c <= 'z';
+}
+
+#+END_SRC
+
+** Number of Atoms (#726) Solution
+   Now we can define our element class. It has an
+   atomCount method that returns the atom count to a hashmap.
+#+BEGIN_SRC java
+interface Element {
+    void atomCount(HashMap<String, Integer> result);
+}
+// Single atom:
+private class Atom implements Element {
+    private final String atom;
+    private final int count;
+    Atom(String a, int c) {
+        atom = a;
+        count = c;
+    }
+    @Override
+    public void atomCount(HashMap<String, Integer> result) {
+        result.put(atom, result.getOrDefault(atom, 0) + count);
+    }
+}
+// Complex compound (multiple atoms):
+private class Form implements Element {
+    private final HashMap<Element, Integer> elements = new HashMap<>();
+    void putElement(Element e, Integer c) {
+        elements.put(e, c);
+    }
+    @Override
+    public void atomCount(HashMap<String, Integer> result) {
+        for (Element e : elements.keySet()) {
+            HashMap<String, Integer> r = new HashMap<>();
+            e.atomCount(r);
+            for (String k : r.keySet()) {
+                int count = r.get(k) * elements.get(e);
+                result.put(k, result.getOrDefault(k, 0) + count);
+            }
+        }
+    }
+}
+#+END_SRC
+
+** Number of Atoms (#726) Solution
+The actual parsing code:
+#+BEGIN_SRC java
+private Element parseAtom(ParsingState state) {
+    String atom = state.take(1) + state.takeWhile(this::isLowerCase);
+    String countStr = state.takeWhile(this::isDigit);
+    int count = countStr.isEmpty() ? 1 : Integer.parseInt(countStr);
+    return new Atom(atom, count);
+}
+private Element parseCompound(ParsingState state) {
+    Form compound = new Form();
+    while (!state.endOfStream() && state.peek() != ')') {
+        Element form = parseForm(state);
+        compound.putElement(form, 1);
+    }
+    return compound;
+}
+private Element parseForm(ParsingState state) {
+    Form form = new Form();
+    if (isUpperCase(state.peek())) {
+        Element atom = parseAtom(state);
+        form.putElement(atom, 1);
+    } else if (state.peek() == '(') {
+        state.take(1);  // ignore (
+        Element compound = parseCompound(state);
+        state.take(1);  // ignore )
+        String countStr = state.takeWhile(this::isDigit);
+        int count = countStr.isEmpty() ? 1 : Integer.parseInt(countStr);
+        form.putElement(compound, count);
+    }
+    return form;
+}
+#+END_SRC
+** Number of Atoms (#726) Solution
+Finally, we can write the count function:
+#+BEGIN_SRC java
+public String countOfAtoms(String formula) {
+    Element compound = parseCompound(new ParsingState(formula));
+    HashMap<String, Integer> atomCounts = new HashMap<>();
+    compound.atomCount(atomCounts);
+    StringBuilder builder = new StringBuilder();
+    List<String> keys = new ArrayList<>(atomCounts.keySet());
+    Collections.sort(keys);
+    for (String k : keys) {
+        builder.append(k);
+        int count = atomCounts.get(k);
+        if (count > 1) builder.append(count);
+    }
+    return builder.toString();
+}
+#+END_SRC
+** Ternary Expression Parser (LintCode #887, LeetCode: #439)
+\pause
+- *Hint 1:* What is the grammar? Is it LL(1) or LL(k)? Is it left recursive?
+\pause
+- *Hint 2:* One possible form of grarmmar is:
+#+BEGIN_SRC text
+S = <boolean>(?S:S)?|<Integer>
+#+END_SRC
+It's not left recursive.
+** Ternary Expression Parser (LintCode #887, LeetCode: #439) Solution
+   Let's define the parsed result. It has an eval function that evaluates the
+   syntax tree:
+#+BEGIN_SRC java
+interface Term {
+    String eval();
+}
+
+// Represents boolean or integer.
+private class Value implements Term {
+    private final String val;
+    Value(String v) { val = v; }
+    @Override
+    public String eval() { return val; }
+}
+
+private class Ternary implements Term {
+    private final Term condition, trueExpr, falseExpr;
+    Ternary(Term cond, Term t, Term f) {
+        condition = cond;
+        trueExpr = t;
+        falseExpr = f;
+    }
+    @Override
+    public String eval() {
+        return condition.eval().equals("T") ? trueExpr.eval() : falseExpr.eval();
+    }
+}
+#+END_SRC
+
+** Ternary Expression Parser (LintCode #887, LeetCode: #439) Solution
+   The parse function is actually very simple and straightforward:
+#+BEGIN_SRC java
+private Term parse(ParsingState state) {
+    if (state.peek() == 'T' || state.peek() == 'F') {
+        Value v = new Value(state.take(1));
+        if (!state.endOfStream() && state.peek() == '?') {
+            state.take(1);  // drop ?
+            Term t = parse(state);
+            state.take(1); // drop :
+            Term f = parse(state);
+            return new Ternary(v, t, f);
+        }
+        return v;
+    }
+    if (isDigit(state.peek())) {
+        Integer i = parseInt(state);
+        return new Value(i.toString());
+    }
+    return null;
+}
+
+public String parseTernary(String expression) {
+    return parse(new ParsingState(expression)).eval();
+}
+#+END_SRC
