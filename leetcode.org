@@ -1339,6 +1339,43 @@ public int maxArea(int[] height) {
     return maxSize;
 }
 #+END_SRC
+** Trapping Rain Water (#42)
+\pause
+- *Hint 1:* For a pair of indices i and j (i < j), if height[i] < height[j]
+  and assume everything between i and j is smaller than i,
+  it's guaranteed that you can scan from i to j and the total volume would be
+  sum(height[i] - height[t]) for t between i and j. Now, if we have j > k > i that
+  height[k] > height[i], what do you do?
+\pause
+- *Hint 2:* For i < k < j, if height[k] > height[i], then if height[k] < height[j],
+  you can repeat that from k to j otherwise, you can go from j to k. Thus, you have
+  a two pointers algorithm.
+** Trapping Rain Water (#42) Solution
+#+BEGIN_SRC java
+public int trap(int[] height) {
+    int start = 0;
+    int end = height.length - 1;
+    int total = 0;
+    while (start < end) {
+        if (height[start] < height[end]) {
+            int i = start + 1;
+            while (i < end && height[i] < height[start]) {
+                total += height[start] - height[i];
+                i++;
+            }
+            start = i;
+        } else {
+            int i = end - 1;
+            while (i > start && height[i] < height[end]) {
+                total += height[end] - height[i];
+                i--;
+            }
+            end = i;
+        }
+    }
+    return total;
+}
+#+END_SRC
 * Parsing
 ** Parsing
 There are a certain category of problems that require you
